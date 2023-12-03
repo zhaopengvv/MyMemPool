@@ -1,15 +1,20 @@
 cmake_minimum_required(VERSION 3.14.1)
 project (my_mem_pool)
 
+# 添加头文件搜索路径
+include_directories("${PROJECT_SOURCE_DIR}/mempool")
+# 添加子文件
 add_subdirectory(mempool)
 OPTION(TEST "option for test module" OFF)
 if (TEST)
     add_subdirectory(test)
 endif()
 
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/mempool)
-TARGET_LINK_LIBRARIES(main libmempool.so)
+# 将当前目录所有源文件名称保存到 $DIR_SRCS
+aux_source_directory(. DIR_SRCS)
 
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/output/bin) 
+# 指定生成目标
+ADD_EXECUTABLE(main ${DIR_SRCS})
 
-ADD_EXECUTABLE(main main.c)
+# 添加链接库
+TARGET_LINK_LIBRARIES(main mempool)

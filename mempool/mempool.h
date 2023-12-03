@@ -8,8 +8,8 @@
 #define MEM_MINBITS 3 /* smallest chunk size is 8 bytes */
 #define MEM_CHUNK_LIMIT (1 << (MEM_FREELISTS_NUM - 1 + MEM_MINBITS))
 
-#define MEM_BLOCK_HEAD_SIZE sizeof(MemBlockHead);
-#define MEM_CHUNK_HEAD_SIZE sizeof(MemChunkHead);
+#define MEM_BLOCK_HEAD_SIZE sizeof(MemBlockHead)
+#define MEM_CHUNK_HEAD_SIZE sizeof(MemChunkHead)
 
 struct MemBlockHead {
     MemBlockHead *prev;

@@ -43,7 +43,7 @@ size_t GetAllocSize(size_t size)
 }
 
 class MemPoolManager {
-private:
+public:
     MemPoolManager() 
     {
         initBlockSize = MEM_BLOCK_INIT_SIZE;
@@ -57,17 +57,16 @@ private:
     {
         ReleaseBlocks();
     }
-    
+    void *MemAlloc(size_t size);
+    void MemFree(void *ptr);
+
+private:
     void InitBlocks();
     void ReleaseBlocks();
     int GetFreeIndex(size_t size);
     MemBlockHead *MallocMemBlock(size_t size);
     MemChunkHead *AllocMemChunkFromFreeList(size_t size);
     MemChunkHead *AllocMemChunkFromBlock(MemBlockHead *block, size_t alloc_size);
-
-public:
-    void *MemAlloc(size_t size);
-    void MemFree(char *ptr);
 
 private:
     MemBlockHead *blocks_head;

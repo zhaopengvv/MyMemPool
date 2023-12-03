@@ -1,4 +1,5 @@
 #include <malloc.h>
+#include<cstring>
 #include "mempoolmanager.h"
 
 void MemPoolManager::InitBlocks()
@@ -13,13 +14,13 @@ void MemPoolManager::InitBlocks()
 
 void MemPoolManager::ReleaseBlocks()
 {
-    if (block_head == nullptr) {
-        return nullptr;
+    if (blocks_head == nullptr) {
+        return;
     }
 
     MemBlockHead *block = nullptr;
-    while (block_head->next != block_head) {
-        block = block_head->next;
+    while (blocks_head->next != blocks_head) {
+        block = blocks_head->next;
         DELETE_BLOCK_FROM_LIST(block);
         block->endptr = nullptr;
         block->freePtr = nullptr;
@@ -29,9 +30,9 @@ void MemPoolManager::ReleaseBlocks()
         free(reinterpret_cast<void *>(block));
     }
 
-    block_head->prev = nullptr;
-    block_head->next = nullptr;
-    free(reinterpret_cast<void *>(block_head));
+    blocks_head->prev = nullptr;
+    blocks_head->next = nullptr;
+    free(reinterpret_cast<void *>(blocks_head));
 }
 
 int MemPoolManager::GetFreeIndex(size_t size)
@@ -60,7 +61,6 @@ MemBlockHead *MemPoolManager::MallocMemBlock(size_t size)
         block->freePtr = nullptr;
         block->endptr = nullptr;
     }
-    block->size = size;
     block->next = NULL;
     block->prev = NULL;
 
@@ -74,7 +74,7 @@ MemChunkHead *MemPoolManager::AllocMemChunkFromFreeList(size_t size)
     if (list_header.ptr != nullptr) {
         char *chunk_body =  reinterpret_cast<char *>(list_header.ptr);
         MemChunkHead *chunk = reinterpret_cast<MemChunkHead *>(chunk_body - MEM_CHUNK_HEAD_SIZE);
-        header.ptr = chunk->ptr;
+        list_header.ptr = chunk->ptr;
         chunk->ptr = chunk_body;
         return chunk;
     }
@@ -123,7 +123,7 @@ void *MemPoolManager::MemAlloc(size_t size)
     }
 
     // 申请新的内存块
-    MemBlockHead *block = MallocMemBlock(nextBlockSize);
+    block = MallocMemBlock(nextBlockSize);
     INSERT_BLOCK_INTO_LIST_HEAD(block);
     UPDATE_NEXT_BLOCK_SIZE();
     // 从内存块分配内存片
@@ -135,7 +135,7 @@ void MemPoolManager::MemFree(void *ptr)
 {
     // 1. 获取memchunk
     char *chunk_body = reinterpret_cast<char *>(ptr);
-    MemChunkHead *chunk = reinterpret_cast<MemBlockHead *>(chunk_body - MEM_CHUNK_HEAD_SIZE);
+    MemChunkHead *chunk = reinterpret_cast<MemChunkHead *>(chunk_body - MEM_CHUNK_HEAD_SIZE);
     size_t chunk_size = chunk->size;
 
     // 2. 释放独立内存块
@@ -151,13 +151,13 @@ void MemPoolManager::MemFree(void *ptr)
     }
     
     // 2. 清除内存数据
-    (void *)memset(ptr, chunk_size, 0, chunk_size);
+    (void *)memset(ptr, 0, chunk_size);
 
     // 3. 插入freeList
     int index = GetFreeIndex(chunk_size);
     MemChunkHead &list_header = freeList[index];
     char *first_chunk_body = reinterpret_cast<char *>(list_header.ptr);
-    MemChunkHead first_chunk* = reinterpret_cast<MemChunkHead *>(first_chunk_body - MEM_CHUNK_HEAD_SIZE);
+    MemChunkHead *first_chunk = reinterpret_cast<MemChunkHead *>(first_chunk_body - MEM_CHUNK_HEAD_SIZE);
     list_header.ptr = chunk->ptr;
     chunk->ptr = first_chunk->ptr;
 }
