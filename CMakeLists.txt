@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.14.1)
 project (my_mem_pool)
 
+SET(CMAKE_BUILD_TYPE "Debug")
+SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g2 -ggdb")
+
 # 添加头文件搜索路径
 include_directories("${PROJECT_SOURCE_DIR}/mempool")
 # 添加子文件

@@ -2,6 +2,14 @@
 #include<cstring>
 #include "mempoolmanager.h"
 
+void MemPoolManager::InitFreeList()
+{
+    for (int i = 0; i < MEM_FREELISTS_NUM; i++) {
+        freeList[i].ptr = nullptr;
+        freeList[i].size = 1 << (i + MEM_MINBITS);
+    }
+}
+
 void MemPoolManager::InitBlocks()
 {
     blocks_head = MallocMemBlock(0);
@@ -83,13 +91,13 @@ MemChunkHead *MemPoolManager::AllocMemChunkFromFreeList(size_t size)
 
 MemChunkHead *MemPoolManager::AllocMemChunkFromBlock(MemBlockHead *block, size_t alloc_size)
 {
-    size_t available_szie = block->endptr - block->endptr;
+    size_t available_szie = block->endptr - block->freePtr + 1;
     if (available_szie >= alloc_size) {
-        MemChunkHead *ret = reinterpret_cast<MemChunkHead *>(block->freePtr);
-        ret->ptr = block->freePtr + MEM_CHUNK_HEAD_SIZE;
-        ret->size = alloc_size;
+        MemChunkHead *chunk = reinterpret_cast<MemChunkHead *>(block->freePtr);
+        chunk->ptr = block->freePtr + MEM_CHUNK_HEAD_SIZE;
+        chunk->size = alloc_size;
         block->freePtr = block->freePtr + MEM_CHUNK_HEAD_SIZE + alloc_size;
-        return ret;
+        return chunk;
     }
     return nullptr;
 }

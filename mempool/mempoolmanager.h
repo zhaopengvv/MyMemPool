@@ -51,6 +51,7 @@ public:
         maxBlockSize = MEM_BLOCK_MAX_SIZE;
         allocChunkLimit = MEM_CHUNK_LIMIT;
 
+        InitFreeList();
         InitBlocks();
     }
     ~MemPoolManager() 
@@ -61,6 +62,7 @@ public:
     void MemFree(void *ptr);
 
 private:
+    void InitFreeList();
     void InitBlocks();
     void ReleaseBlocks();
     int GetFreeIndex(size_t size);
