@@ -32,19 +32,9 @@
         block->next->prev = prev;               \
     }
 
-
-size_t GetAllocSize(size_t size)
-{
-    size_t alloc_size = 1 << MEM_MINBITS;
-    while (alloc_size < size) {
-        alloc_size = alloc_size << 1;
-    }
-    return alloc_size;
-}
-
-class MemPoolManager {
+class MemPool {
 public:
-    MemPoolManager() 
+    MemPool() 
     {
         initBlockSize = MEM_BLOCK_INIT_SIZE;
         nextBlockSize = MEM_BLOCK_INIT_SIZE * 2;
@@ -54,14 +44,28 @@ public:
         InitFreeList();
         InitBlocks();
     }
-    ~MemPoolManager() 
+    ~MemPool() 
     {
         ReleaseBlocks();
     }
-    void *MemAlloc(size_t size);
-    void MemFree(void *ptr);
+    void *allocate(size_t size);
+    void deallocate(void *ptr);
+    size_t GetBlocksCount()
+    {
+        return blocks_count;
+    }
+
+    size_t GetFreeChunkCount(int index)
+    {
+        return free_chunk_count[index];
+    }
+
 
 private:
+    static size_t AllocSizeAlign(size_t size)
+    {
+        return (size + MEM_SIZE_ALIGN - 1) & ~(MEM_SIZE_ALIGN - 1);
+    }
     void InitFreeList();
     void InitBlocks();
     void ReleaseBlocks();
@@ -72,11 +76,13 @@ private:
 
 private:
     MemBlockHead *blocks_head;
+    size_t blocks_count;
     /**
      * 数组默认长度为11，每个元素作为链表头指向一个由特定大小MemChunk组成的链表
      * 第k个元素MemChunk的大小（字节）：2^(k + 2)，最小为8字节，最大不超过8K字节。
     */
     MemChunkHead freeList[MEM_FREELISTS_NUM];
+    size_t free_chunk_count[MEM_FREELISTS_NUM];
 
     size_t initBlockSize;
     size_t maxBlockSize;

@@ -2,7 +2,7 @@
 #include<cstring>
 #include "mempoolmanager.h"
 
-void MemPoolManager::InitFreeList()
+void MemPool::InitFreeList()
 {
     for (int i = 0; i < MEM_FREELISTS_NUM; i++) {
         freeList[i].ptr = nullptr;
@@ -10,7 +10,7 @@ void MemPoolManager::InitFreeList()
     }
 }
 
-void MemPoolManager::InitBlocks()
+void MemPool::InitBlocks()
 {
     blocks_head = MallocMemBlock(0);
     MemBlockHead *block = MallocMemBlock(initBlockSize);
@@ -20,7 +20,7 @@ void MemPoolManager::InitBlocks()
     block->prev = blocks_head;
 }
 
-void MemPoolManager::ReleaseBlocks()
+void MemPool::ReleaseBlocks()
 {
     if (blocks_head == nullptr) {
         return;
@@ -43,21 +43,18 @@ void MemPoolManager::ReleaseBlocks()
     free(reinterpret_cast<void *>(blocks_head));
 }
 
-int MemPoolManager::GetFreeIndex(size_t size)
+/**
+ *  idx     0   1   2   3   4   5 ...     
+ *  size    8   16  32  64  128 .....
+ *  eg. size:18
+ *  (18 + 7) / 8 - 1 = 3 -1 = 2
+*/
+int MemPool::GetFreeIndex(size_t size)
 {
-    if (size > (1 << MEM_MINBITS)) {
-        int index = 0;
-        size_t alloc_size = 1 << MEM_MINBITS;
-        while (alloc_size < size) {
-            alloc_size = alloc_size << 1;
-            index++;
-        }
-        return index;
-    }
-    return 0;
+    return (size + MEM_SIZE_ALIGN -1) / MEM_SIZE_ALIGN - 1; 
 }
 
-MemBlockHead *MemPoolManager::MallocMemBlock(size_t size)
+MemBlockHead *MemPool::MallocMemBlock(size_t size)
 {
     size_t malloc_size = MEM_BLOCK_HEAD_SIZE + size;
     char *data = (char *)malloc(malloc_size);
@@ -75,7 +72,7 @@ MemBlockHead *MemPoolManager::MallocMemBlock(size_t size)
     return block;
 }
 
-MemChunkHead *MemPoolManager::AllocMemChunkFromFreeList(size_t size)
+MemChunkHead *MemPool::AllocMemChunkFromFreeList(size_t size)
 {
     int index = GetFreeIndex(size);
     MemChunkHead &list_header = freeList[index];
@@ -89,7 +86,7 @@ MemChunkHead *MemPoolManager::AllocMemChunkFromFreeList(size_t size)
     return nullptr;
 }
 
-MemChunkHead *MemPoolManager::AllocMemChunkFromBlock(MemBlockHead *block, size_t alloc_size)
+MemChunkHead *MemPool::AllocMemChunkFromBlock(MemBlockHead *block, size_t alloc_size)
 {
     size_t available_szie = block->endptr - block->freePtr + 1;
     if (available_szie >= alloc_size) {
@@ -102,7 +99,7 @@ MemChunkHead *MemPoolManager::AllocMemChunkFromBlock(MemBlockHead *block, size_t
     return nullptr;
 }
 
-void *MemPoolManager::MemAlloc(size_t size)
+void *MemPool::allocate(size_t size)
 {
     if (size > MEM_CHUNK_LIMIT) {
         // 申请一个独立的内存块
@@ -139,7 +136,7 @@ void *MemPoolManager::MemAlloc(size_t size)
     return ret->ptr;
 }
 
-void MemPoolManager::MemFree(void *ptr)
+void MemPool::deallocate(void *ptr)
 {
     // 1. 获取memchunk
     char *chunk_body = reinterpret_cast<char *>(ptr);

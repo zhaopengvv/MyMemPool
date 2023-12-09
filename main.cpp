@@ -2,8 +2,8 @@
 
 int main()
 {
-    MemPoolManager mem;
-    void *zone = mem.MemAlloc(100);
+    MemPool mem;
+    void *zone = mem.allocate(100);
     return 0;
 }
 
