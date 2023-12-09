@@ -103,7 +103,7 @@ void *MemPool::allocate(size_t size)
 {
     if (size > MEM_CHUNK_LIMIT) {
         // 申请一个独立的内存块
-        size_t alloc_size = GetAllocSize(size);
+        size_t alloc_size = AllocSizeAlign(size);
         MemBlockHead *block = MallocMemBlock(alloc_size);
         INSERT_BLOCK_INTO_LIST_TAIL(block);
         MemChunkHead *ret = AllocMemChunkFromBlock(block, alloc_size);
@@ -118,7 +118,7 @@ void *MemPool::allocate(size_t size)
 
     // 查找合适的内存块，分配内存片
     MemBlockHead *block = blocks_head->next;
-    size_t alloc_size = GetAllocSize(size);
+    size_t alloc_size = AllocSizeAlign(size);
     while (block != nullptr) {
         MemChunkHead *ret = AllocMemChunkFromBlock(block, alloc_size);
         if (ret != nullptr) {
